@@ -2,7 +2,8 @@ import tkinter
 from tkinter import ttk
 import data_entry_interface
 import sqlite3
-
+from tkinter import filedialog
+from PIL import ImageTk, Image
 
 window = tkinter.Tk()
 window.title("Translation Database Viewer App")
@@ -138,26 +139,26 @@ target_lang_combobox.grid(row=0, column=7, sticky='w')
 
 # Create Labels and Entry Boxes for Row 1
 
-# add label and entry for the client
-client_label = tkinter.Label(frame_for_boxes, text='Client')
-client_label.grid(row=1, column=0, sticky='e')
-
-client_entry = tkinter.Entry(frame_for_boxes)
-client_entry.grid(row=1, column=1, sticky='w')
-
 # add label and entry for the year
 year_label = tkinter.Label(frame_for_boxes, text='Year')
-year_label.grid(row=1, column=2, sticky='e')
+year_label.grid(row=1, column=0, sticky='e')
 
 year_spinbox = tkinter.Spinbox(frame_for_boxes, from_=2003, to=2023)
-year_spinbox.grid(row=1, column=3, sticky='w')
+year_spinbox.grid(row=1, column=1, sticky='w')
 
 # add label and entry for the month
 month_label = tkinter.Label(frame_for_boxes, text='Month')
-month_label.grid(row=1, column=4, sticky='e')
+month_label.grid(row=1, column=2, sticky='e')
 
 month_spinbox = tkinter.Spinbox(frame_for_boxes, from_=1, to=12)
-month_spinbox.grid(row=1, column=5, columnspan=3, sticky='w')
+month_spinbox.grid(row=1, column=3, columnspan=3, sticky='w')
+
+# add label and entry for the client
+client_label = tkinter.Label(frame_for_boxes, text='Client')
+client_label.grid(row=1, column=4, sticky='e')
+
+client_entry = tkinter.Entry(frame_for_boxes)
+client_entry.grid(row=1, column=5, sticky='w')
 
 # add padding to all widgets within basic info frame:
 for widget in frame_for_boxes.winfo_children():
@@ -165,19 +166,46 @@ for widget in frame_for_boxes.winfo_children():
 
 # Create Labels and Entry Boxes for Row 2
 
-# create label and entry for source path
+# Create Label and Entry for Source Path
 source_path_label = tkinter.Label(frame_for_boxes, text='Source \nPath')
 source_path_label.grid(row=2, column=0, sticky='e')
 
 source_path_entry = tkinter.Entry(frame_for_boxes, width=55)
 source_path_entry.grid(row=2, column=1, columnspan=2)
 
-# create label and entry for target path
+
+# Function to Select Source File
+def select_source_path():
+    source_name = tkinter.filedialog.askopenfilename(initialdir='/', title='Select a File',
+                                                     filetypes=[('all files', '*.*'), ('Word', '*.docx')])
+    source_path_entry.insert(0, source_name)
+
+
+# Button to Select Source File
+select_source_img = ImageTk.PhotoImage(Image.open('select_file_icon.png').resize((15, 15)))
+select_file_button = tkinter.Button(frame_for_boxes, image=select_source_img, command=select_source_path)
+select_file_button.grid(row=2, column=3, sticky='w')
+
+
+# Create Label and Entry for Target Path
 target_path_label = tkinter.Label(frame_for_boxes, text='Target \nPath')
 target_path_label.grid(row=2, column=3, sticky='e')
 
 target_path_entry = tkinter.Entry(frame_for_boxes, width=55)
 target_path_entry.grid(row=2, column=4, columnspan=2, sticky='w')
+
+
+# Function to Select Target File
+def select_target_path():
+    target_name = tkinter.filedialog.askopenfilename(initialdir='/', title='Select a File',
+                                                     filetypes=[('all files', '*.*'), ('Word', '*.docx')])
+    target_path_entry.insert(0, target_name)
+
+
+# Button to Select Target File
+select_target_img = ImageTk.PhotoImage(Image.open('select_file_icon.png').resize((15, 15)))
+select_file_button = tkinter.Button(frame_for_boxes, image=select_target_img, command=select_target_path)
+select_file_button.grid(row=2, column=6, sticky='w')
 
 # Create Labels and Entry Boxes for Row 3
 
@@ -232,9 +260,35 @@ def update_record():
     pass
 
 
-# Function to Clear Entry Boxes without Updating Record
+# Function to Clear the Entry Boxes
 def clear_entry_boxes():
-    pass
+    for widget in frame_for_boxes.winfo_children():
+        if widget.winfo_class() in ['Entry', 'Spinbox', 'TCombobox']:
+            widget.delete(0, 'end')
+
+
+# Function to Clear Entry Boxes without Updating Record
+def select_record(e):
+    # Clear Entry Boxes First
+    for widget in frame_for_boxes.winfo_children():
+        if widget.winfo_class() in ['Entry', 'Spinbox', 'TCombobox']:
+            widget.delete(0, 'end')
+
+    # Grab Record Number
+    selected = data_tree.focus()
+    # Grab Record Values
+    selected_values = data_tree.item(selected, "values")
+
+    # Insert Values Into Entry Fields
+    value_index = 0
+    for widget in frame_for_boxes.winfo_children():
+        if widget.winfo_class() in ['Entry', 'Spinbox', 'TCombobox']:
+            widget.insert(0, selected_values[value_index])
+            value_index += 1
+
+
+# Bind Left Mouse Click to Select a Record
+data_tree.bind('<ButtonRelease-1>', select_record)
 
 
 # Function to Move the Record Up
@@ -276,8 +330,8 @@ move_down_record_btn = tkinter.Button(frame_for_controls, text="Move Down Record
 move_down_record_btn.grid(row=0, column=6, padx=10, pady=10)
 
 # Create a Button to Clear the Entry Boxes
-clear_boxes_btn = tkinter.Button(frame_for_controls, text="Clear Entry Boxes", command=clear_entry_boxes)
-clear_boxes_btn.grid(row=0, column=7, padx=10, pady=10)
+clear_entry_boxes_btn = tkinter.Button(frame_for_controls, text="Clear Entry Boxes", command=clear_entry_boxes)
+clear_entry_boxes_btn.grid(row=0, column=7, padx=10, pady=10)
 
 
 window.mainloop()
