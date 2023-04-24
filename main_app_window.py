@@ -1,8 +1,10 @@
 import tkinter
 from tkinter import ttk
+from tkinter import filedialog
+from tkinter import messagebox
 import data_entry_interface
 import sqlite3
-from tkinter import filedialog
+
 from PIL import ImageTk, Image
 
 window = tkinter.Tk()
@@ -25,7 +27,6 @@ style.configure('Treeview',
 # Change Color of Selected Row
 style.map('Treeview', background=[('selected', '#347083')])
 
-
 # Create Frame for Viewer
 frame_for_tree = tkinter.Frame(window)
 frame_for_tree.pack(pady=10)
@@ -42,25 +43,27 @@ data_tree.pack()
 scroll_tree.configure(command=data_tree.yview)
 
 # Define Columns
-data_tree['columns'] = ("Description", "Subject", "Source Lang", "Target Lang",
+data_tree['columns'] = ("ID", "Description", "Subject", "Source Lang", "Target Lang",
                         "Year", "Month", "Client", "Source File", "Target File", "Quantity", "Unit")
 
 # Format Columns
 data_tree.column("#0", width=0, stretch=False)
+data_tree.column("ID", anchor='center', width=40, minwidth=25)
 data_tree.column("Description", anchor='w', width=140, minwidth=50)
 data_tree.column("Subject", anchor='w', width=140, minwidth=50)
-data_tree.column("Source Lang", anchor='center', width=90, minwidth=50)
-data_tree.column("Target Lang", anchor='center', width=90, minwidth=50)
-data_tree.column("Year", anchor='w', width=70, minwidth=50)
-data_tree.column("Month", anchor='w', width=70, minwidth=50)
+data_tree.column("Source Lang", anchor='center', width=70, minwidth=35)
+data_tree.column("Target Lang", anchor='center', width=70, minwidth=35)
+data_tree.column("Year", anchor='center', width=50, minwidth=35)
+data_tree.column("Month", anchor='center', width=50, minwidth=35)
 data_tree.column("Client", anchor='center', width=140, minwidth=50)
 data_tree.column("Source File", anchor='w', width=140, minwidth=50)
 data_tree.column("Target File", anchor='w', width=140, minwidth=50)
-data_tree.column("Quantity", anchor='center', width=70, minwidth=50)
-data_tree.column("Unit", anchor='center', width=70, minwidth=50)
+data_tree.column("Quantity", anchor='center', width=60, minwidth=35)
+data_tree.column("Unit", anchor='center', width=60, minwidth=35)
 
 # Create Headings
 data_tree.heading("#0", text="", anchor='center')
+data_tree.heading("ID", text="ID", anchor='center')
 data_tree.heading("Description", text="Description", anchor='center')
 data_tree.heading("Subject", text="Subject", anchor='center')
 data_tree.heading("Source Lang", text="Source Lang", anchor='center')
@@ -84,7 +87,7 @@ connection = sqlite3.connect('translations.db')
 with connection:
     # Get all records from database as a  list of tuples
 
-    database_records = connection.execute('SELECT * FROM translatio').fetchall()
+    database_records = connection.execute('SELECT rowid, * FROM translatio').fetchall()
     # Iterate through the list of tuples = content of the database
     # Crete counter to account for even and odd rows
     count = 0
@@ -94,7 +97,7 @@ with connection:
             # Insert data with even row tag
             data_tree.insert(parent='', index='end', text='',
                              values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6],
-                                     record[7], record[8], record[9], record[10]), tags=['evenrow'])
+                                     record[7], record[8], record[9], record[10], record[11]), tags=['evenrow'])
         # If the row count is odd
         if count % 2 == 1:
             data_tree.insert(parent='', index='end', text='',
@@ -186,7 +189,6 @@ select_source_img = ImageTk.PhotoImage(Image.open('select_file_icon.png').resize
 select_file_button = tkinter.Button(frame_for_boxes, image=select_source_img, command=select_source_path)
 select_file_button.grid(row=2, column=3, sticky='w')
 
-
 # Create Label and Entry for Target Path
 target_path_label = tkinter.Label(frame_for_boxes, text='Target \nPath')
 target_path_label.grid(row=2, column=3, sticky='e')
@@ -221,12 +223,11 @@ unit_label = tkinter.Label(frame_for_boxes, text='Unit')
 unit_label.grid(row=3, column=2, sticky='e')
 
 unit_combobox = ttk.Combobox(frame_for_boxes, values=['', 'chars', 'words', 'hours'])
-unit_combobox.grid(row=3,  column=3, sticky='w')
+unit_combobox.grid(row=3, column=3, sticky='w')
 
 # add padding to all widgets within additional info frame:
 for widget in frame_for_boxes.winfo_children():
     widget.grid_configure(padx=10, pady=5)
-
 
 # Create Frame for Buttons
 frame_for_controls = tkinter.LabelFrame(window, text="Database Controls")
@@ -242,7 +243,17 @@ def add_new_record():
 
 # Function to Delete Selected Record
 def delete_one_record():
-    pass
+    selected_row = data_tree.selection()[0]
+    row_id = data_tree.item(selected_row)['values'][0]
+    print(row_id)
+    print(type(row_id))
+    deletion_confirmation = tkinter.messagebox.askquestion(title='Are you sure?',
+                                                message='Deletion of can not be undone.\n Do you wish to continue?',
+                                                icon='warning')
+    if deletion_confirmation == 'yes':
+        tkinter.messagebox.showinfo(title="Hui tebe, kozhanyi ubliudok", message='You have no power here')
+    else:
+        tkinter.messagebox.showinfo(title='Zassal?', message='Realno zassal :-)')
 
 
 # Delete Many Selected Records
@@ -252,6 +263,7 @@ def delete_many_selected():
 
 # Function to Delete All Records
 def delete_all_records():
+    """Not Really Needed"""
     pass
 
 
@@ -293,11 +305,13 @@ data_tree.bind('<ButtonRelease-1>', select_record)
 
 # Function to Move the Record Up
 def move_record_up():
+    """Not Really Needed"""
     pass
 
 
 # Function to Move the Record Down
 def move_record_down():
+    """Not Really Needed"""
     pass
 
 
@@ -314,7 +328,8 @@ delete_one_record_btn = tkinter.Button(frame_for_controls, text="Delete Record",
 delete_one_record_btn.grid(row=0, column=2, padx=10, pady=10)
 
 # Create a Button to Delete Many Selected Records and Update the Treeview and Table
-delete_many_records_btn = tkinter.Button(frame_for_controls, text="Delete Selected Records", command=delete_many_selected)
+delete_many_records_btn = tkinter.Button(frame_for_controls,
+                                         text="Delete Selected Records", command=delete_many_selected)
 delete_many_records_btn.grid(row=0, column=3, padx=10, pady=10)
 
 # Create a Button to Delete All Records and Update the Treeview and Table
@@ -332,6 +347,5 @@ move_down_record_btn.grid(row=0, column=6, padx=10, pady=10)
 # Create a Button to Clear the Entry Boxes
 clear_entry_boxes_btn = tkinter.Button(frame_for_controls, text="Clear Entry Boxes", command=clear_entry_boxes)
 clear_entry_boxes_btn.grid(row=0, column=7, padx=10, pady=10)
-
 
 window.mainloop()
